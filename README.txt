@@ -1,2 +1,2 @@
-// Testando algumas coisas aqui
-// primeiro quero saber se isso vai entrar no repo do git la na minha vm
+// Testando algumas coisas 
+// Alterei o banner de message of the day
