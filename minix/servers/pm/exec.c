@@ -39,7 +39,7 @@ do_exec(void)
 {
 	message m;
 
-	printf("Executando: %s\n", m_in.m_lc_pm_exec.name);
+	//printf("Executando: %s\n", m_in.m_lc_pm_exec.name);
 
 	/* Forward call to VFS */
 	memset(&m, 0, sizeof(m));
