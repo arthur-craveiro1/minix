@@ -346,7 +346,7 @@ static void announce(void)
   printf(" \n");
   printf("========================================\n");
   printf("| Minix 3.4.0rc6 - SO - UNIFESP 1s2025 |\n");
-  printf("| Projeto Pratico (I) - Equipe 5 |\n");
+  printf("|    Projeto Pratico (I) - Equipe 5    |\n");
   printf("========================================\n");
   printf(" \n");
 }
@@ -366,8 +366,8 @@ void prepare_shutdown(const int how)
   printf("MINIX will now be shut down ...\n");
   printf(" \n");
   printf("========================================\n");
-  printf("| ATE A PROXIMA - SO - UNIFESP 1s2025 |\n");
-  printf("| Projeto Pratico (I) - Equipe 5 |\n");
+  printf("|  ATE A PROXIMA - SO - UNIFESP 1s2025 |\n");
+  printf("|    Projeto Pratico (I) - Equipe 5    |\n");
   printf("========================================\n");
   printf(" \n");
   set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz,
