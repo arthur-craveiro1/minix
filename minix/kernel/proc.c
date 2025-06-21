@@ -41,6 +41,10 @@
 
 #include <minix/syslib.h>
 
+// para escalonamento aleatorio
+#include <time.h>
+#include <stdlib.h>
+
 /* Scheduling and message passing functions */
 static void idle(void);
 /**
@@ -1794,12 +1798,21 @@ static struct proc * pick_proc(void)
   struct proc **rdy_head;
   int q;				/* iterate over queues */
 
+  srand(time(NULL)); // pega tempo atual e usa como semente do gerador aleatorio
+
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
    * If there are no processes ready to run, return NULL.
    */
   rdy_head = get_cpulocal_var(run_q_head);
-  for (q=0; q < NR_SCHED_QUEUES; q++) {	
+  for (q=0; q < NR_SCHED_QUEUES; q++) {
+
+	// para escalonamento aleatorio
+	if(q >= 4){
+		q = rand() % (NR_SCHED_QUEUES-3) + 4;
+	}
+	// fim 
+	
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
 		continue;
