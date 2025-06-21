@@ -1798,7 +1798,7 @@ static struct proc * pick_proc(void)
   struct proc **rdy_head;
   int q;				/* iterate over queues */
 
-  srand(time(NULL)); // pega tempo atual e usa como semente do gerador aleatorio
+  srandom(time(NULL)); // pega tempo atual e usa como semente do gerador aleatorio
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
@@ -1809,7 +1809,7 @@ static struct proc * pick_proc(void)
 
 	// para escalonamento aleatorio
 	if(q >= 4){
-		q = rand() % (NR_SCHED_QUEUES-3) + 4;
+		q = random() % (NR_SCHED_QUEUES-3) + 4;
 	}
 	// fim 
 	
