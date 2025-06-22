@@ -18,6 +18,7 @@ static unsigned balance_timeout;
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
 static int schedule_process(struct schedproc * rmp, unsigned flags);
+int lottery(void);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2
@@ -85,7 +86,7 @@ static void pick_cpu(struct schedproc * proc)
 /*===========================================================================*
  *				lottery				     *
  *===========================================================================*/
- PUBLIC int lottery()
+int lottery()
  {
 	struct schedproc *rmp;
 	int proc_nr;
@@ -111,7 +112,7 @@ static void pick_cpu(struct schedproc * proc)
 					if (winner <=0 && rmp->priority == 15) {
 						/*printf("Winners previous priority: %d\n", rmp->priority);*/
 						rmp->priority--;
-						schedule_process(rmp);
+						schedule_process(rmp, SCHEDULE_CHANGE_PRIO);
 					}
 				}
 				
@@ -149,7 +150,7 @@ int do_noquantum(message *m_ptr)
 	if(rmp->is_sys_proc != 1 && rmp->priority == MAX_USER_Q){
 		/*m_ptr->SCHEDULING_MAXPRIO = -1;*/
 		rmp->priority = MIN_USER_Q;
-		schedule_process(rmp);
+		schedule_process(rmp, SCHEDULE_CHANGE_PRIO);
 	}
 	
 	
