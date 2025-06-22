@@ -80,6 +80,47 @@ static void pick_cpu(struct schedproc * proc)
 #endif
 }
 
+// INICIO ESCALONAMENTO LOTERIA
+
+/*===========================================================================*
+ *				lottery				     *
+ *===========================================================================*/
+ PUBLIC int lottery()
+ {
+	struct schedproc *rmp;
+	int proc_nr;
+	int rv;
+	int winner;
+	int total_tickets = 0;
+	
+	/* Add each participants tickets to the total pile of tickets*/
+	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+		if ((rmp->flags & IN_USE && rmp->is_sys_proc != 1) && rmp->priority == 15) {
+			total_tickets += rmp->tickets;
+		}
+	}
+	
+	/* This is the basic loop logic for picking a winning process as desc. in our design doc. */
+	if (total_tickets > 0) {
+		winner = rand() % total_tickets + 1; /* min of 1 ticket */
+		for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+			if ((rmp->flags & IN_USE && rmp->is_sys_proc != 1) && rmp->priority == 15) {
+				if (winner > 0) {
+					winner -= rmp->tickets;
+					/*printf("Winners previous priority: %d\n", rmp->priority);*/
+					if (winner <=0 && rmp->priority == 15) {
+						/*printf("Winners previous priority: %d\n", rmp->priority);*/
+						rmp->priority--;
+						schedule_process(rmp);
+					}
+				}
+				
+			}
+		}
+	}
+	return OK;
+ }
+
 /*===========================================================================*
  *				do_noquantum				     *
  *===========================================================================*/
@@ -96,13 +137,27 @@ int do_noquantum(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
+	if (rmp->is_sys_proc == 1 && rmp->priority < (MAX_USER_Q - 1)) {
 		rmp->priority += 1; /* lower priority */
 	}
 
-	if ((rv = schedule_process_local(rmp)) != OK) {
+	if (rmp->is_sys_proc == 1 && (rv = schedule_process_local(rmp)) != OK) {
 		return rv;
 	}
+
+	/* Move user-proc back down a priority level */
+	if(rmp->is_sys_proc != 1 && rmp->priority == MAX_USER_Q){
+		/*m_ptr->SCHEDULING_MAXPRIO = -1;*/
+		rmp->priority = MIN_USER_Q;
+		schedule_process(rmp);
+	}
+	
+	
+	/* run lotery */
+	if (rmp->is_sys_proc != 1 && (rv = lottery()) != OK) {
+		return rv;
+	}
+
 	return OK;
 }
 
@@ -112,7 +167,8 @@ int do_noquantum(message *m_ptr)
 int do_stop_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
-	int proc_nr_n;
+	//aqui
+	int proc_nr_n, rv;
 
 	/* check who can send you requests */
 	if (!accept_message(m_ptr))
@@ -131,6 +187,15 @@ int do_stop_scheduling(message *m_ptr)
 #endif
 	rmp->flags = 0; /*&= ~IN_USE;*/
 
+	//aqui
+	if (rmp->is_sys_proc != 1 && rmp->priority >= MAX_USER_Q) {
+		/*m_ptr->SCHEDULING_MAXPRIO = 1; Adjust tickets*/
+		/*printf("I'm in the Kernel panic!!!!!!!!\n");
+		printf("I'm in the Kernel panic!!!!!!!!\n");
+		printf("I'm in the Kernel panic!!!!!!!!\n");*/
+		lottery();
+	}
+	/*lottery();		<----- KERNEL PANIC */
 	return OK;
 }
 
@@ -140,7 +205,8 @@ int do_stop_scheduling(message *m_ptr)
 int do_start_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
-	int rv, proc_nr_n, parent_nr_n;
+	// aqui
+	int rv, proc_nr_n, parent_nr_n, nice;
 	
 	/* we can handle two kinds of messages here */
 	assert(m_ptr->m_type == SCHEDULING_START || 
@@ -186,6 +252,10 @@ int do_start_scheduling(message *m_ptr)
 #endif
 	}
 	
+	// dando tickets 
+	rmp->tickets = 20;
+	rmp->is_sys_proc = 0;
+
 	switch (m_ptr->m_type) {
 
 	case SCHEDULING_START:
@@ -194,6 +264,7 @@ int do_start_scheduling(message *m_ptr)
 		 * from the parent */
 		rmp->priority   = rmp->max_priority;
 		rmp->time_slice = m_ptr->m_lsys_sched_scheduling_start.quantum;
+		rmp->is_sys_proc = 1;
 		break;
 		
 	case SCHEDULING_INHERIT:
@@ -204,8 +275,13 @@ int do_start_scheduling(message *m_ptr)
 				&parent_nr_n)) != OK)
 			return rv;
 
-		rmp->priority = schedproc[parent_nr_n].priority;
+		//rmp->priority = schedproc[parent_nr_n].priority;
+		//rmp->time_slice = schedproc[parent_nr_n].time_slice;
+
+		/* New user-proc get set to priority 15*/
+		rmp->priority = 15;
 		rmp->time_slice = schedproc[parent_nr_n].time_slice;
+
 		break;
 		
 	default: 
@@ -257,6 +333,9 @@ int do_nice(message *m_ptr)
 	int rv;
 	int proc_nr_n;
 	unsigned new_q, old_q, old_max_q;
+	// aqui
+	int t_tickets;
+	int nice;
 
 	/* check who can send you requests */
 	if (!accept_message(m_ptr))
@@ -269,17 +348,22 @@ int do_nice(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	new_q = m_ptr->m_pm_sched_scheduling_set_nice.maxprio;
-	if (new_q >= NR_SCHED_QUEUES) {
-		return EINVAL;
-	}
+
+	//new_q = m_ptr->m_pm_sched_scheduling_set_nice.maxprio;
+	//if (new_q >= NR_SCHED_QUEUES) {
+	//	return EINVAL;
+	//}
 
 	/* Store old values, in case we need to roll back the changes */
 	old_q     = rmp->priority;
 	old_max_q = rmp->max_priority;
 
+	// incrementa nice de acordo com nice
+	nice = m_ptr->m_pm_sched_scheduling_set_nice.maxprio;
+	rmp->tickets += nice;
+
 	/* Update the proc entry and reschedule the process */
-	rmp->max_priority = rmp->priority = new_q;
+	//rmp->max_priority = rmp->priority = new_q;
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		/* Something went wrong when rescheduling the process, roll

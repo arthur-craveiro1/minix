@@ -41,9 +41,6 @@
 
 #include <minix/syslib.h>
 
-// para escalonamento aleatorio
-#include <stdlib.h>
-
 /* Scheduling and message passing functions */
 static void idle(void);
 /**
@@ -1804,12 +1801,6 @@ static struct proc * pick_proc(void)
   rdy_head = get_cpulocal_var(run_q_head);
   for (q=0; q < NR_SCHED_QUEUES; q++) {
 
-	// para escalonamento aleatorio
-	if(q >= USER_Q){
-		q = random() % (NR_SCHED_QUEUES-(USER_Q-1)) + USER_Q;
-	}
-	// fim 
-	
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
 		continue;
