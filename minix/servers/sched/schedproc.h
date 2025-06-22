@@ -34,7 +34,7 @@ EXTERN struct schedproc {
 								process allowed
 								to run on */
 	// para escolonamento loteria
-	unsigned num_tickets;  // numero de tickets que um processo possui
+	unsigned tickets;  // numero de tickets que um processo possui
 	unsigned nice;         // valor correspondente ao comportamento do processo
 	unsigned is_sys_proc;
 	// fim para escolonamento loteria
