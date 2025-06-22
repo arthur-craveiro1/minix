@@ -13,6 +13,9 @@
 #include <minix/com.h>
 #include <machine/archtypes.h>
 
+//aqui
+#include <stdlib.h>
+
 static unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
@@ -103,7 +106,7 @@ int lottery()
 	
 	/* This is the basic loop logic for picking a winning process as desc. in our design doc. */
 	if (total_tickets > 0) {
-		winner = rand() % total_tickets + 1; /* min of 1 ticket */
+		winner = random() % total_tickets + 1; /* min of 1 ticket */
 		for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 			if ((rmp->flags & IN_USE && rmp->is_sys_proc != 1) && rmp->priority == 15) {
 				if (winner > 0) {
