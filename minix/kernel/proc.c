@@ -1808,8 +1808,8 @@ static struct proc * pick_proc(void)
   for (q=0; q < NR_SCHED_QUEUES; q++) {
 
 	// para escalonamento aleatorio
-	if(q >= 4){
-		q = random() % (NR_SCHED_QUEUES-3) + 4;
+	if(q >= USER_Q){
+		q = random() % (NR_SCHED_QUEUES-(USER_Q-1)) + USER_Q;
 	}
 	// fim 
 	
