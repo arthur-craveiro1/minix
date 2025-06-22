@@ -21,6 +21,9 @@
 #include "hw_intr.h"
 #include "arch_proto.h"
 
+// para escalonamento aleatorio
+#include <time.h>
+
 #ifdef CONFIG_SMP
 #include "smp.h"
 #endif
@@ -56,6 +59,7 @@ void bsp_finish_booting(void)
   get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
   get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
   announce();				/* print MINIX startup banner */
+  srandom(time(NULL)); // para escalonamento aleatorio - pega tempo atual e usa como semente do gerador aleatorio
 
   /*
    * we have access to the cpu local run queue, only now schedule the processes.

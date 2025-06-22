@@ -42,7 +42,6 @@
 #include <minix/syslib.h>
 
 // para escalonamento aleatorio
-#include <time.h>
 #include <stdlib.h>
 
 /* Scheduling and message passing functions */
@@ -1797,8 +1796,6 @@ static struct proc * pick_proc(void)
   register struct proc *rp;			/* process to run */
   struct proc **rdy_head;
   int q;				/* iterate over queues */
-
-  srandom(time(NULL)); // pega tempo atual e usa como semente do gerador aleatorio
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
