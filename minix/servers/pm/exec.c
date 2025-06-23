@@ -26,24 +26,11 @@
 #include <signal.h>
 #include <libexec.h>
 #include <sys/ptrace.h>
-#include<limits.h>
 #include "mproc.h"
 
 #define ESCRIPT	(-2000)	/* Returned by read_header for a #! script. */
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
-static int get_fullpath(const char *relpath, char *fullpath, size_t size) {
-    if (relpath[0] == '/') {
-        strncpy(fullpath, relpath, size);
-        return OK;
-    }
-    
-    char cwd[PATH_MAX];
-    if (sys_getcwd(cwd, sizeof(cwd)) != OK)
-        return ERR;
-    
-    snprintf(fullpath, size, "%s/%s", cwd, relpath);
-    return OK;
-}
+
 /*===========================================================================*
  *				do_exec					     *
  *===========================================================================*/
@@ -93,12 +80,12 @@ int do_newexec(void)
 	if (r != OK)
 		panic("do_newexec: sys_datacopy failed: %d", r);
 
-	char fullpath[PATH_MAX];
-    if (get_fullpath(args.progname, fullpath, PATH_MAX) == OK) {
-        printf("Executando: %s\n", fullpath);
-    } else {
-        printf("Executando: %s\n", args.progname);  // Fallback
-    }
+	// char fullpath[PATH_MAX];
+    // if (get_fullpath(args.progname, fullpath, PATH_MAX) == OK) {
+    //     printf("Executando: %s\n", fullpath);
+    // } else {
+    //     printf("Executando: %s\n", args.progname);  // Fallback
+    // }
 
 	allow_setuid = 0;	/* Do not allow setuid execution */
 	rmp->mp_flags &= ~TAINTED;	/* By default not tainted */
