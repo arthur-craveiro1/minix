@@ -10,3 +10,8 @@ Quantidade a ser confirmada.
 cc -o teste_escalonamento teste_processos.c
 ./teste_escalonamento 100 1000000 100000000 > resultados_escalonamento.txt
 ```
+## Leitura do resultados_escalonamento.txt
+```
+less resultados_escalonamento.txt
+Pressionar q para sair (voltar ao #minix)
+```
