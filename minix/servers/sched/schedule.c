@@ -128,7 +128,6 @@ int loteria()
  *				do_noquantum				     *
  *===========================================================================*/
 /* Houve alteracoes para Escalonamento Loteria */
-
 int do_noquantum(message *m_ptr)
 {
 	register struct schedproc *rmp;
@@ -169,7 +168,6 @@ int do_noquantum(message *m_ptr)
  *				do_stop_scheduling			     *
  *===========================================================================*/
 /* Houve alteracoes para Escalonamento Loteria */
-
 int do_stop_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
@@ -205,7 +203,6 @@ int do_stop_scheduling(message *m_ptr)
  *				do_start_scheduling			     *
  *===========================================================================*/
 /* Houve alteracoes para Escalonamento Loteria */
-
 int do_start_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
@@ -332,7 +329,6 @@ int do_start_scheduling(message *m_ptr)
  *				do_nice					     *
  *===========================================================================*/
 /* Houve alteracoes para Escalonamento Loteria */
-
 int do_nice(message *m_ptr)
 {
 	struct schedproc *rmp;
