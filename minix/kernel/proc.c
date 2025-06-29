@@ -1799,11 +1799,15 @@ static struct proc * pick_proc(void)
    * If there are no processes ready to run, return NULL.
    */
   rdy_head = get_cpulocal_var(run_q_head);
+  
+  /* NR_SCHED_QUEUES <- Niveis de fila de prioridade (quantas filas de prioridade o processo tem) */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
 		continue;
 	}
+	/* Funcao assert eh na real so um grande if pra caso esteja com debug on o SO retorna um erro caso falso 
+	    |-> Funcao proc_is_runnable vai retornar se p->p_rts_flags */
 	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)	 	
 		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
