@@ -13,15 +13,16 @@
 #include <minix/com.h>
 #include <machine/archtypes.h>
 
-//aqui
+/* Inicio - Alteracao para Escalonamento Loteria */
 #include <stdlib.h>
+/* Fim - Alteracao para Escalonamento Loteria */
 
 static unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
 static int schedule_process(struct schedproc * rmp, unsigned flags);
-int lottery(void);
+int loteria(void);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2
@@ -84,36 +85,33 @@ static void pick_cpu(struct schedproc * proc)
 #endif
 }
 
-// INICIO ESCALONAMENTO LOTERIA
-
+/* Inicio - Alteracao para Escalonamento Loteria */
 /*===========================================================================*
- *				lottery				     *
+ *				                   Loteria      				             *
  *===========================================================================*/
-int lottery()
+int loteria()
  {
 	struct schedproc *rmp;
 	int proc_nr;
 	int rv;
-	int winner;
+	int ganhador;
 	int total_tickets = 0;
 	
-	/* Add each participants tickets to the total pile of tickets*/
+	/* Adicao de ingressos de cada participante a pilha total de ingressos */
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if ((rmp->flags & IN_USE && rmp->is_sys_proc != 1) && rmp->priority == 15) {
 			total_tickets += rmp->tickets;
 		}
 	}
 	
-	/* This is the basic loop logic for picking a winning process as desc. in our design doc. */
+	/* Logica do loop para escolher um processo vencedor */
 	if (total_tickets > 0) {
-		winner = random() % total_tickets + 1; /* min of 1 ticket */
+		ganhador = random() % total_tickets + 1; /* min 1 ticket */
 		for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 			if ((rmp->flags & IN_USE && rmp->is_sys_proc != 1) && rmp->priority == 15) {
-				if (winner > 0) {
-					winner -= rmp->tickets;
-					/*printf("Winners previous priority: %d\n", rmp->priority);*/
-					if (winner <=0 && rmp->priority == 15) {
-						/*printf("Winners previous priority: %d\n", rmp->priority);*/
+				if (ganhador > 0) {
+					ganhador -= rmp->tickets;
+					if (ganhador <=0 && rmp->priority == 15) {
 						rmp->priority--;
 						schedule_process(rmp, SCHEDULE_CHANGE_PRIO);
 					}
@@ -124,10 +122,12 @@ int lottery()
 	}
 	return OK;
  }
+ /* Fim - Alteracao para Escalonamento Loteria */
 
 /*===========================================================================*
  *				do_noquantum				     *
  *===========================================================================*/
+/* Houve alteracoes para Escalonamento Loteria */
 
 int do_noquantum(message *m_ptr)
 {
@@ -157,8 +157,8 @@ int do_noquantum(message *m_ptr)
 	}
 	
 	
-	/* run lotery */
-	if (rmp->is_sys_proc != 1 && (rv = lottery()) != OK) {
+	/* run loteria */
+	if (rmp->is_sys_proc != 1 && (rv = loteria()) != OK) {
 		return rv;
 	}
 
@@ -168,6 +168,8 @@ int do_noquantum(message *m_ptr)
 /*===========================================================================*
  *				do_stop_scheduling			     *
  *===========================================================================*/
+/* Houve alteracoes para Escalonamento Loteria */
+
 int do_stop_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
@@ -193,19 +195,17 @@ int do_stop_scheduling(message *m_ptr)
 
 	//aqui
 	if (rmp->is_sys_proc != 1 && rmp->priority >= MAX_USER_Q) {
-		/*m_ptr->SCHEDULING_MAXPRIO = 1; Adjust tickets*/
-		/*printf("I'm in the Kernel panic!!!!!!!!\n");
-		printf("I'm in the Kernel panic!!!!!!!!\n");
-		printf("I'm in the Kernel panic!!!!!!!!\n");*/
-		lottery();
+		loteria();
 	}
-	/*lottery();		<----- KERNEL PANIC */
+	/*loteria();		<----- KERNEL PANIC */
 	return OK;
 }
 
 /*===========================================================================*
  *				do_start_scheduling			     *
  *===========================================================================*/
+/* Houve alteracoes para Escalonamento Loteria */
+
 int do_start_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
@@ -331,6 +331,8 @@ int do_start_scheduling(message *m_ptr)
 /*===========================================================================*
  *				do_nice					     *
  *===========================================================================*/
+/* Houve alteracoes para Escalonamento Loteria */
+
 int do_nice(message *m_ptr)
 {
 	struct schedproc *rmp;

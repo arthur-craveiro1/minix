@@ -103,8 +103,9 @@ int sched_nice(struct mproc *rmp, int nice)
 	}
 
 	m.m_pm_sched_scheduling_set_nice.endpoint	= rmp->mp_endpoint;
-	//aqui
+	/* Inicio - Alteracao para Escalonamento Loteria */
 	m.m_pm_sched_scheduling_set_nice.maxprio	= nice;
+	/* Fim - Alteracao para Escalonamento Loteria */
 	if ((rv = _taskcall(rmp->mp_scheduler, SCHEDULING_SET_NICE, &m))) {
 		return rv;
 	}
