@@ -166,7 +166,6 @@ int do_start_scheduling(message *m_ptr)
 		rmp->cpu = machine.bsp_id;
 		/* FIXME set the cpu mask */
 #endif
-	}
 	
 	switch (m_ptr->m_type) {
 
@@ -222,6 +221,7 @@ int do_start_scheduling(message *m_ptr)
 
 	return OK;
 }
+
 
 /*===========================================================================*
  *				do_nice					     *
