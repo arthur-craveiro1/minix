@@ -1593,51 +1593,57 @@ asyn_error:
  *				enqueue					     * 
  *===========================================================================*/
 void enqueue(
-  register struct proc *rp	/* this process is now runnable */
+  register struct proc rp	/ this process is now runnable */
 )
 {
-/* Add 'rp' to one of the queues of runnable processes.  This function is 
- * responsible for inserting a process into one of the scheduling queues. 
- * The mechanism is implemented here.   The actual scheduling policy is
- * defined in sched() and pick_proc().
- *
- * This function can be used x-cpu as it always uses the queues of the cpu the
- * process is assigned to.
- */
+/* Add 'rp' to one of the queues of runnable processes using SRT. */
+
   int q = rp->p_priority;	 		/* scheduling queue to use */
   struct proc **rdy_head, **rdy_tail;
-  
-  assert(proc_is_runnable(rp)); 
 
+  assert(proc_is_runnable(rp));
   assert(q >= 0);
 
   rdy_head = get_cpu_var(rp->p_cpu, run_q_head);
   rdy_tail = get_cpu_var(rp->p_cpu, run_q_tail);
 
-  /* Now add the process to the queue. */
-  if (!rdy_head[q]) {		/* add to empty queue */
-      rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
-      rp->p_nextready = NULL;		/* mark new end */
-  } 
-  else {					/* add to tail of queue */
-      rdy_tail[q]->p_nextready = rp;		/* chain tail of queue */	
-      rdy_tail[q] = rp;				/* set new queue tail */
-      rp->p_nextready = NULL;		/* mark new end */
+  /* Now add the process to the queue ordered by remaining_time (SRT). */
+
+  struct proc *prev = NULL;
+  struct proc *curr = rdy_head[q];
+
+  // percorre a fila até encontrar um processo com tempo restante maior
+  while (curr != NULL && curr->remaining_time <= rp->remaining_time) {
+      prev = curr;
+      curr = curr->p_nextready;
   }
 
-  if (cpuid == rp->p_cpu) {
-	  /*
-	   * enqueueing a process with a higher priority than the current one,
-	   * it gets preempted. The current process must be preemptible. Testing
-	   * the priority also makes sure that a process does not preempt itself
-	   */
-	  struct proc * p;
-	  p = get_cpulocal_var(proc_ptr);
-	  assert(p);
-	  if((p->p_priority > rp->p_priority) &&
-			  (priv(p)->s_flags & PREEMPTIBLE))
-		  RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
+  if (prev == NULL) {
+      // inserir no início da fila
+      rp->p_nextready = rdy_head[q];
+      rdy_head[q] = rp;
+      if (rdy_tail[q] == NULL)
+          rdy_tail[q] = rp;
+  } else {
+      // inserir no meio ou no final
+      rp->p_nextready = curr;
+      prev->p_nextready = rp;
+      if (curr == NULL)
+          rdy_tail[q] = rp;
   }
+
+  /* Implementa preempção SRT pura:
+   * Se o novo processo tem menor remaining_time que o processo atual,
+   * força a preempção.
+   */
+  if (cpuid == rp->p_cpu) {
+      struct proc *p = get_cpulocal_var(proc_ptr);
+      assert(p);
+      if ((p->remaining_time > rp->remaining_time) &&
+          (priv(p)->s_flags & PREEMPTIBLE))
+          RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
+  }
+
 #ifdef CONFIG_SMP
   /*
    * if the process was enqueued on a different cpu and the cpu is idle, i.e.
@@ -1645,13 +1651,12 @@ void enqueue(
    * process
    */
   else if (get_cpu_var(rp->p_cpu, cpu_is_idle)) {
-	  smp_schedule(rp->p_cpu);
+      smp_schedule(rp->p_cpu);
   }
 #endif
 
   /* Make note of when this process was added to queue */
   read_tsc_64(&(get_cpulocal_var(proc_ptr)->p_accounting.enter_queue));
-
 
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());
