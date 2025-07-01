@@ -41,6 +41,8 @@
 
 #include <minix/syslib.h>
 
+#define SRT_POLICY_ATIVA 1 /*flag para ativar o SRT, mas quando quiser testar outro algoritmo, definir como 0*/
+
 /* Scheduling and message passing functions */
 static void idle(void);
 /**
@@ -133,7 +135,7 @@ void proc_init(void)
 		rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
 		rp->p_scheduler = NULL;		/* no user space scheduler */
 		rp->p_priority = 0;		/* no priority */
-		rp->p_quantum_size_ms = 0;	/* no quantum size */
+		rp->p_quantum_size_ms = 50;	/* Quantum para */
 
 		/* arch-specific initialization */
 		arch_proc_reset(rp);
@@ -1607,7 +1609,12 @@ void enqueue(
   int q = rp->p_priority;	 		/* scheduling queue to use */
   struct proc **rdy_head, **rdy_tail;
   
-  assert(proc_is_runnable(rp));
+  assert(proc_is_runnable(rp)); /*Verifica se o processo rp está em estado runnable (pronto pra executar) e se não estiver, gera erro e para a execução*/
+
+  if(SRT_POLICY_ATIVA){ /*Verifica se a política SRT está ativada*/
+	enqueue_srt(rp); /*Chama a função enqueue_srt para inserir o processo na fila em ordem de menor tempo restante*/
+	return;
+  }
 
   assert(q >= 0);
 
@@ -1777,6 +1784,48 @@ void dequeue(struct proc *rp)
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());
 #endif
+}
+
+/*===========================================================================*
+ *				enqueue_srt				     *
+ *===========================================================================*/
+/*
+ * Insere o processo de acordo com Shortest Remaining Time (SRT),
+ * garantindo que a fila de prontos fique ordenada pelo menor tempo restante.
+ */
+void enqueue_srt(struct proc *rp)
+{
+  int q = rp->p_priority; /*Pega a prioridade do processo para saber em qual fila inserir*/
+  struct proc **rdy_head, **rdy_tail; /*Ponteiros para o início e fim da fila de prontos*/
+  struct proc *curr, *prev = NULL; /*curr percore a lista, prev guarda o anterior*/
+
+  assert(proc_is_runnable(rp)); /*Verifica se o processo está pronto para execução*/
+  rdy_head = get_cpu_var(rp->p_cpu, run_q_head); /*Obtém a fila de prontos do CPU onde o processo está*/
+  rdy_tail = get_cpu_var(rp->p_cpu, run_q_tail); /*Obtém o ponteiro para o final da fila*/
+
+  curr = rdy_head[q]; /*Começa percorrendo do início da fila*/
+
+  /* Percorre a fila até achar um processo com maior tempo restante que rp */
+  while (curr && curr->p_cpu_time_left <= rp->p_cpu_time_left) {
+    prev = curr;
+    curr = curr->p_nextready;
+  }
+
+  if (prev == NULL) { /*se não achou nenhum menor (ou fila vazia), insere no início*/
+    rp->p_nextready = rdy_head[q]; /*ajusta o ponteiro next do rp para apontar para o antigo primeiro*/
+    rdy_head[q] = rp; /*Faz o rp ser o novo primeiro da fila*/
+  } else {
+    /* Inserir entre prev e curr */
+    rp->p_nextready = curr; /*rp aponta para o próximo (curr)*/
+    prev->p_nextready = rp; /*o anterior aponta para rp*/
+  }
+
+  /*se inseriu no final, atualiza tail */
+  if (rp->p_nextready == NULL)
+    rdy_tail[q] = rp; /*atualiza tail*/
+
+  /* Indica que inseriu o processo e seu tempo restante */
+  printf("SRT: inseriu %s com tempo %llu ms\n", rp->p_name, rp->p_cpu_time_left);
 }
 
 /*===========================================================================*
