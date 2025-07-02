@@ -46,6 +46,7 @@ do_exec(void)
 	m.VFS_PM_PATH = (void *)m_in.m_lc_pm_exec.name;
 	m.VFS_PM_PATH_LEN = m_in.m_lc_pm_exec.namelen;
 	m.VFS_PM_FRAME = (void *)m_in.m_lc_pm_exec.frame;
+	printf("Executando: %s\n", exec_name);
 	m.VFS_PM_FRAME_LEN = m_in.m_lc_pm_exec.framelen;
 	m.VFS_PM_PS_STR = m_in.m_lc_pm_exec.ps_str;
 
