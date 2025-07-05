@@ -347,7 +347,6 @@ static void announce(void)
   printf("| Minix 3.4.0rc6 - SO - UNIFESP 1s2025 |\n");
   printf("|     Projeto Pratico (I) - Equipe 5   |\n");
   printf("========================================\n");
-  sleep()
 }
 
 /*===========================================================================*
