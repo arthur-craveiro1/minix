@@ -363,7 +363,6 @@ void prepare_shutdown(const int how)
    * argument passes the shutdown status. 
    */
   printf("MINIX will now be shut down ...\n");
-  printf("MINIX will now be shut down ...\n");
   printf("=======================================\n");
   printf("| ATE A PROXIMA - SO - UNIFESP 1s2025 |\n");
   printf("| Projeto Pratico (I) - Equipe 5      |\n");
